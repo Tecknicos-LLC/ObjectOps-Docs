@@ -2,8 +2,15 @@ openapi: 3.0.0
 info:
   title: Object-X API
   version: 1.0.0
-  description: |
-    Object-X API for tracking IT assets, certificates, accounts, and expiration metadata.
+
+tags:
+  - name: Objects
+    description: CRUD operations for Object-X objects.
+  - name: Object Stores
+    description: Manage object store metadata.
+  - name: Notifications
+    description: Retrieve notification rules.
+
 servers:
   - url: https://yourdomain.com/wp-json/objectx/v1
 
@@ -14,69 +21,6 @@ components:
       in: header
       name: X-ObjectX-Key
 
-  schemas:
-    Object:
-      type: object
-      properties:
-        objectID:
-          type: string
-          example: "OBJ-0001"
-        title:
-          type: string
-        type:
-          type: string
-        typeSlug:
-          type: string
-        issuer:
-          type: string
-        issuedBy:
-          type: string
-        domain:
-          type: string
-        objectName:
-          type: string
-        serialNumber:
-          type: string
-        owner:
-          type: string
-        department:
-          type: string
-        expirationDate:
-          type: string
-          format: date
-        expired:
-          type: boolean
-        expiredBeforeImport:
-          type: boolean
-        inUseBy:
-          type: array
-          items:
-            type: string
-        foundIn:
-          type: string
-        description:
-          type: string
-        entryRule:
-          type: string
-        entryMethod:
-          type: string
-          example: "Automated Import"
-        notificationSettingID:
-          type: string
-        notificationSent:
-          type: boolean
-        followUpSent:
-          type: boolean
-        createdOn:
-          type: string
-          format: date
-        version:
-          type: integer
-        history:
-          type: array
-          items:
-            type: object
-
 security:
   - ObjectXKey: []
 
@@ -84,147 +28,111 @@ paths:
 
   /create:
     post:
-      summary: Create a new Object-X object
-      security:
-        - ObjectXKey: []
+      tags: [Objects]
+      summary: Create a new object
+      description: Create a new Object-X object and automatically assign an objectID.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Object"
-            example:
-              title: "Server Certificate"
-              type: "Certificate"
-              typeSlug: "certificate"
-              domain: "corp.tecknicos.com"
-              objectName: "corp-tecknicos-ssl"
-              expirationDate: "2026-01-01"
-              owner: "DevOps"
-              department: "Engineering"
+              type: object
       responses:
         200:
           description: Object created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Object"
 
   /objects:
     get:
-      summary: Retrieve all objects
-      security:
-        - ObjectXKey: []
+      tags: [Objects]
+      summary: Get all objects
+      description: Retrieve all Object-X objects stored in the system.
       responses:
         200:
           description: List of objects
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  count:
-                    type: integer
-                  objects:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Object"
 
   /objects/view/{id}:
     get:
-      summary: Retrieve a single object by ID
-      security:
-        - ObjectXKey: []
+      tags: [Objects]
+      summary: Get object by ID
+      description: Retrieve a single object using its objectID.
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: string
-            example: "OBJ-0001"
       responses:
         200:
           description: Object found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Object"
         404:
           description: Object not found
 
   /update/{id}:
     put:
+      tags: [Objects]
       summary: Update an object
-      security:
-        - ObjectXKey: []
+      description: Update one or more fields of an existing Object-X object.
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: string
-            example: "OBJ-0001"
       requestBody:
         content:
           application/json:
             schema:
               type: object
-            example:
-              title: "Updated Certificate Title"
-              owner: "Security Team"
-              expirationDate: "2027-05-01"
       responses:
         200:
           description: Object updated
 
   /delete/{id}:
     delete:
+      tags: [Objects]
       summary: Delete an object
-      security:
-        - ObjectXKey: []
+      description: Permanently delete an object from Object-X.
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: string
-            example: "OBJ-0001"
       responses:
         200:
           description: Object deleted
 
   /object-stores:
     get:
-      summary: Retrieve all object stores
-      security:
-        - ObjectXKey: []
+      tags: [Object Stores]
+      summary: Get all object stores
+      description: Retrieve all Object-X object-store configurations.
       responses:
         200:
           description: List of object stores
 
   /notification-rules:
     get:
-      summary: Retrieve all notification rules
-      security:
-        - ObjectXKey: []
+      tags: [Notifications]
+      summary: Get notification rules
+      description: Retrieve all expiration and follow-up notification rule configurations.
       responses:
         200:
-          description: List of notification rules
+          description: List of rules
 
   /notification-rules/view/{id}:
     get:
-      summary: Retrieve a specific notification rule
-      security:
-        - ObjectXKey: []
+      tags: [Notifications]
+      summary: Get notification rule
+      description: Retrieve a single notification rule by ID.
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: string
-            example: "expire-30-days"
       responses:
         200:
           description: Rule found
         404:
-          description: Notification rule not found
+          description: Rule not found
