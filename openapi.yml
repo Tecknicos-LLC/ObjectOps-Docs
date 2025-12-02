@@ -2,17 +2,229 @@ openapi: 3.0.0
 info:
   title: Object-X API
   version: 1.0.0
+  description: |
+    Object-X API for tracking IT assets, certificates, accounts, and expiration metadata.
+servers:
+  - url: https://yourdomain.com/wp-json/objectx/v1
+
+components:
+  securitySchemes:
+    ObjectXKey:
+      type: apiKey
+      in: header
+      name: X-ObjectX-Key
+
+  schemas:
+    Object:
+      type: object
+      properties:
+        objectID:
+          type: string
+          example: "OBJ-0001"
+        title:
+          type: string
+        type:
+          type: string
+        typeSlug:
+          type: string
+        issuer:
+          type: string
+        issuedBy:
+          type: string
+        domain:
+          type: string
+        objectName:
+          type: string
+        serialNumber:
+          type: string
+        owner:
+          type: string
+        department:
+          type: string
+        expirationDate:
+          type: string
+          format: date
+        expired:
+          type: boolean
+        expiredBeforeImport:
+          type: boolean
+        inUseBy:
+          type: array
+          items:
+            type: string
+        foundIn:
+          type: string
+        description:
+          type: string
+        entryRule:
+          type: string
+        entryMethod:
+          type: string
+          example: "Automated Import"
+        notificationSettingID:
+          type: string
+        notificationSent:
+          type: boolean
+        followUpSent:
+          type: boolean
+        createdOn:
+          type: string
+          format: date
+        version:
+          type: integer
+        history:
+          type: array
+          items:
+            type: object
+
+security:
+  - ObjectXKey: []
 
 paths:
-  /objects:
-    get:
-      summary: List all objects
+
+  /create:
+    post:
+      summary: Create a new Object-X object
+      security:
+        - ObjectXKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Object"
+            example:
+              title: "Server Certificate"
+              type: "Certificate"
+              typeSlug: "certificate"
+              domain: "corp.tecknicos.com"
+              objectName: "corp-tecknicos-ssl"
+              expirationDate: "2026-01-01"
+              owner: "DevOps"
+              department: "Engineering"
       responses:
         200:
-          description: OK
+          description: Object created
           content:
             application/json:
-              example:
-                items:
-                  - id: 1
-                    name: "Server Certificate"
+              schema:
+                $ref: "#/components/schemas/Object"
+
+  /objects:
+    get:
+      summary: Retrieve all objects
+      security:
+        - ObjectXKey: []
+      responses:
+        200:
+          description: List of objects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  objects:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Object"
+
+  /objects/view/{id}:
+    get:
+      summary: Retrieve a single object by ID
+      security:
+        - ObjectXKey: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "OBJ-0001"
+      responses:
+        200:
+          description: Object found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Object"
+        404:
+          description: Object not found
+
+  /update/{id}:
+    put:
+      summary: Update an object
+      security:
+        - ObjectXKey: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "OBJ-0001"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              title: "Updated Certificate Title"
+              owner: "Security Team"
+              expirationDate: "2027-05-01"
+      responses:
+        200:
+          description: Object updated
+
+  /delete/{id}:
+    delete:
+      summary: Delete an object
+      security:
+        - ObjectXKey: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "OBJ-0001"
+      responses:
+        200:
+          description: Object deleted
+
+  /object-stores:
+    get:
+      summary: Retrieve all object stores
+      security:
+        - ObjectXKey: []
+      responses:
+        200:
+          description: List of object stores
+
+  /notification-rules:
+    get:
+      summary: Retrieve all notification rules
+      security:
+        - ObjectXKey: []
+      responses:
+        200:
+          description: List of notification rules
+
+  /notification-rules/view/{id}:
+    get:
+      summary: Retrieve a specific notification rule
+      security:
+        - ObjectXKey: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            example: "expire-30-days"
+      responses:
+        200:
+          description: Rule found
+        404:
+          description: Notification rule not found
