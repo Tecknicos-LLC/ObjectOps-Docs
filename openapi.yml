@@ -1,2 +1,18 @@
+openapi: 3.0.0
+info:
+  title: Object-X API
+  version: 1.0.0
 
-test
+paths:
+  /objects:
+    get:
+      summary: List all objects
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              example:
+                items:
+                  - id: 1
+                    name: "Server Certificate"
