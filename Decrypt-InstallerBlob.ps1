@@ -4,77 +4,77 @@ function Decrypt-InstallerBlob {
         [Parameter(Mandatory)][string]$RegToken
     )
 
-    #
     # ------------------------------------------------------------
-    # 1. Normalization: Convert Base64-URL → Standard Base64
+    # 1. Base64URL → Base64 normalize
     # ------------------------------------------------------------
-    #
-
-    # Replace URL-safe chars
     $Blob = $Blob.Replace('-', '+').Replace('_', '/')
-
-    # Fix padding
     switch ($Blob.Length % 4) {
         2 { $Blob += '==' }
         3 { $Blob += '=' }
-        1 { throw "Invalid Base64URL length." }
     }
 
-    #
     # ------------------------------------------------------------
-    # 2. Decode Base64 into raw bytes
+    # 2. Decode Base64 string → raw bytes
     # ------------------------------------------------------------
-    #
-    try {
-        $bytes = [Convert]::FromBase64String($Blob)
-    }
-    catch {
-        throw "Failed to decode Base64 blob. Inner: $($_.Exception.Message)"
-    }
+    $bytes = [Convert]::FromBase64String($Blob)
 
-    #
     # ------------------------------------------------------------
-    # 3. Extract IV and Ciphertext
+    # 3. Extract IV + Ciphertext
     # ------------------------------------------------------------
-    #
-    if ($bytes.Length -lt 17) {
-        throw "Blob too short to contain IV + ciphertext."
-    }
-
     $IV = $bytes[0..15]
     $CipherBytes = $bytes[16..($bytes.Length - 1)]
 
-    #
     # ------------------------------------------------------------
-    # 4. Derive AES-256 Key = SHA256(RegToken)
+    # 4. Derive AES-256 CBC Key from reg token
     # ------------------------------------------------------------
-    #
     $sha = [System.Security.Cryptography.SHA256]::Create()
     $KeyBytes = $sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($RegToken))
 
-    #
-    # ------------------------------------------------------------
-    # 5. AES-256-CBC Decrypt
-    # ------------------------------------------------------------
-    #
     $aes = [System.Security.Cryptography.Aes]::Create()
     $aes.Mode    = "CBC"
     $aes.Padding = "PKCS7"
     $aes.Key     = $KeyBytes
     $aes.IV      = $IV
 
-    try {
-        $decryptor = $aes.CreateDecryptor()
-        $plainBytes = $decryptor.TransformFinalBlock($CipherBytes, 0, $CipherBytes.Length)
-    }
-    catch {
-        throw "AES decrypt failed. Possibly wrong token or corrupted blob. Inner: $($_.Exception.Message)"
-    }
+    # ------------------------------------------------------------
+    # 5. AES decrypt
+    # ------------------------------------------------------------
+    $decryptor = $aes.CreateDecryptor()
+    $plainBytes = $decryptor.TransformFinalBlock($CipherBytes, 0, $CipherBytes.Length)
 
-    #
     # ------------------------------------------------------------
-    # 6. Convert bytes → UTF8 string
+    # 6. GZIP decompress
     # ------------------------------------------------------------
-    #
+   # ------------------------------------------------------------
+# 6. GZIP decompress (safe version)
+# ------------------------------------------------------------
+try {
+    $byteArray = [byte[]]$plainBytes   # <--- FORCE array to be treated as a single byte[]
+
+    $inputMs = New-Object System.IO.MemoryStream
+    $inputMs.Write($byteArray, 0, $byteArray.Length)
+    $inputMs.Seek(0, [System.IO.SeekOrigin]::Begin) | Out-Null
+
+    $gzip = New-Object System.IO.Compression.GzipStream(
+        $inputMs,
+        [IO.Compression.CompressionMode]::Decompress
+    )
+
+    $outputMs = New-Object System.IO.MemoryStream
+    $gzip.CopyTo($outputMs)
+
+    $gzip.Dispose()
+    $inputMs.Dispose()
+
+    $plainBytes = $outputMs.ToArray()
+}
+catch {
+    throw "GZIP decompression failed: $($_.Exception.Message)"
+}
+
+
+    # ------------------------------------------------------------
+    # 7. Convert UTF8 bytes → string
+    # ------------------------------------------------------------
     return [System.Text.Encoding]::UTF8.GetString($plainBytes)
 }
