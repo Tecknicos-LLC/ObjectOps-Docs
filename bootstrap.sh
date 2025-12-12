@@ -74,11 +74,11 @@ fi
 chmod +x "$INSTALLER_PATH"
 
 # ------------------------------------------------------------
-# 5. Execute decrypted python installer
+# 5. Execute decrypted python installer in service-install mode
 # ------------------------------------------------------------
-log "[4/5] Executing service-config.py ..."
+log "[4/5] Installing ObjectX Agent service ..."
 
-python3 "$INSTALLER_PATH" \
+python3 "$INSTALLER_PATH" --install-service \
     "$AGENT_ID" \
     "$TENANT_ID" \
     "$GATEWAY_WS" \
@@ -87,3 +87,4 @@ python3 "$INSTALLER_PATH" \
 
 log "[5/5] ObjectX Agent installation completed successfully."
 exit 0
+
