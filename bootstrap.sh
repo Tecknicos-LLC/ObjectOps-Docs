@@ -21,7 +21,7 @@ else
 fi
 
 LOG_FILE="$ROOT_DIR/bootstrap.log"
-DECRYPT_URL="https://raw.githubusercontent.com/Tecknicos-LLC/ObjectOps-Docs/main/decrypt_installer.py"
+DECRYPT_URL="https://raw.githubusercontent.com/Tecknicos-LLC/ObjectOps-Docs/main/decrypt_installer.py?nocache=$(date +%s)"
 DECRYPT_SCRIPT="$ROOT_DIR/decrypt_installer.py"
 INSTALLER_PATH="$ROOT_DIR/service-config.py"    # <-- PYTHON OUTPUT
 
