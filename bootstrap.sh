@@ -8,7 +8,7 @@ set -euo pipefail
 AGENT_ID="$1"
 TENANT_ID="$2"
 TOKEN="$3"
-BLOB_FILE="$4"      # <-- NOW A FILEPATH
+BLOB_FILE="$4"      # <-- PATH TO BLOB FILE
 GATEWAY_WS="$5"
 
 # ------------------------------------------------------------
@@ -23,7 +23,7 @@ fi
 LOG_FILE="$ROOT_DIR/bootstrap.log"
 DECRYPT_URL="https://raw.githubusercontent.com/Tecknicos-LLC/ObjectOps-Docs/main/decrypt_installer.py"
 DECRYPT_SCRIPT="$ROOT_DIR/decrypt_installer.py"
-INSTALLER_PATH="$ROOT_DIR/service-config.sh"     # <-- SHELL SCRIPT OUTPUT
+INSTALLER_PATH="$ROOT_DIR/service-config.py"    # <-- PYTHON OUTPUT
 
 mkdir -p "$ROOT_DIR"
 
@@ -47,7 +47,7 @@ command -v python3 >/dev/null 2>&1 || {
 }
 
 # ------------------------------------------------------------
-# 3. RUN DECRYPTOR → shell installer output
+# 3. Run decryptor → PRODUCES PYTHON SERVICE INSTALLER
 # ------------------------------------------------------------
 log "[2/5] Running decryptor..."
 
@@ -59,19 +59,26 @@ if [[ -z "$DECRYPT_OUTPUT" ]]; then
 fi
 
 # ------------------------------------------------------------
-# 4. Write installer script
+# 4. Write decrypted Python installer
 # ------------------------------------------------------------
 log "[3/5] Writing decrypted installer to $INSTALLER_PATH"
 
 printf "%s" "$DECRYPT_OUTPUT" > "$INSTALLER_PATH"
+
+# Insert python shebang if missing
+if ! head -n1 "$INSTALLER_PATH" | grep -q "python3"; then
+    sed -i '1s|^|#!/usr/bin/env python3\n|' "$INSTALLER_PATH" 2>/dev/null || \
+    sed -i '' '1s|^|#!/usr/bin/env python3\n|' "$INSTALLER_PATH"
+fi
+
 chmod +x "$INSTALLER_PATH"
 
 # ------------------------------------------------------------
-# 5. RUN SERVICE INSTALLER
+# 5. Execute decrypted python installer
 # ------------------------------------------------------------
-log "[4/5] Executing service-config.sh ..."
+log "[4/5] Executing service-config.py ..."
 
-bash "$INSTALLER_PATH" \
+python3 "$INSTALLER_PATH" \
     "$AGENT_ID" \
     "$TENANT_ID" \
     "$GATEWAY_WS" \
