@@ -24,8 +24,7 @@ fi
 LOG_FILE="$ROOT_DIR/bootstrap.log"
 DECRYPT_URL="https://raw.githubusercontent.com/Tecknicos-LLC/ObjectOps-Docs/main/decrypt_installer.py"
 DECRYPT_SCRIPT="$ROOT_DIR/decrypt_installer.py"
-
-INSTALLER_PATH="$ROOT_DIR/service-config.sh"   # <-- FIXED (it's a .sh script)
+INSTALLER_PATH="$ROOT_DIR/service-config.py"   # <-- PYTHON installer
 
 mkdir -p "$ROOT_DIR"
 
@@ -56,7 +55,7 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 
 # ------------------------------------------------------------
-# 3. RUN DECRYPTOR → PRODUCE INSTALLER (Bash script)
+# 3. RUN DECRYPTOR → PRODUCE INSTALLER (Python script)
 # ------------------------------------------------------------
 log "[2/5] Running decryptor..."
 
@@ -71,7 +70,7 @@ if [[ -z "$DECRYPT_OUTPUT" ]]; then
 fi
 
 # ------------------------------------------------------------
-# 4. WRITE INSTALLER BASH SCRIPT
+# 4. WRITE INSTALLER PYTHON SCRIPT
 # ------------------------------------------------------------
 log "[3/5] Writing decrypted installer to $INSTALLER_PATH"
 
@@ -79,20 +78,20 @@ printf "%s" "$DECRYPT_OUTPUT" > "$INSTALLER_PATH"
 chmod +x "$INSTALLER_PATH"
 
 if [[ ! -s "$INSTALLER_PATH" ]]; then
-    log "ERROR: Failed to write service-config.sh"
+    log "ERROR: Failed to write service-config.py"
     exit 1
 fi
 
 # ------------------------------------------------------------
-# 5. EXECUTE INSTALLER BASH SCRIPT
+# 5. EXECUTE INSTALLER PYTHON SCRIPT
 # ------------------------------------------------------------
-log "[4/5] Executing service-config.sh ..."
+log "[4/5] Executing service-config.py ..."
 
-bash "$INSTALLER_PATH" \
-    --agent-id "$AGENT_ID" \
-    --tenant-id "$TENANT_ID" \
-    --registration-token "$TOKEN" \
-    --gateway-ws "$GATEWAY_WS" \
+python3 "$INSTALLER_PATH" \
+    "$AGENT_ID" \
+    "$TENANT_ID" \
+    "$GATEWAY_WS" \
+    "$TOKEN" \
     2>&1 | tee -a "$LOG_FILE"
 
 log "[5/5] ObjectX Agent installation completed successfully."
